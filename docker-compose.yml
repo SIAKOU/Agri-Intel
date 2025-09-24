@@ -1,0 +1,199 @@
+version: '3.8'
+
+services:
+  # Database Services
+  postgres:
+    image: postgis/postgis:15-3.3
+    container_name: agriintel_postgres
+    environment:
+      POSTGRES_DB: agriintel360
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: stanislas
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/db/init:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"
+    networks:
+      - agriintel_network
+    restart: unless-stopped
+
+  mongodb:
+    image: mongo:7.0
+    container_name: agriintel_mongo
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: secure_password_123
+      MONGO_INITDB_DATABASE: agriintel360
+    volumes:
+      - mongodb_data:/data/db
+      - ./backend/db/mongo-init:/docker-entrypoint-initdb.d
+    ports:
+      - "27017:27017"
+    networks:
+      - agriintel_network
+    restart: unless-stopped
+
+  redis:
+    image: redis:7.2-alpine
+    container_name: agriintel_redis
+    command: redis-server --appendonly yes --requirepass secure_password_123
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - agriintel_network
+    restart: unless-stopped
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.10.0
+    container_name: agriintel_elasticsearch
+    environment:
+      - discovery.type=single-node
+      - "ES_JAVA_OPTS=-Xms1g -Xmx1g"
+      - xpack.security.enabled=false
+      - xpack.security.enrollment.enabled=false
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+    networks:
+      - agriintel_network
+    restart: unless-stopped
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: agriintel_backend
+    environment:
+      - DATABASE_URL=postgresql://admin:secure_password_123@postgres:5432/agriintel360
+      - MONGODB_URL=mongodb://admin:stanislas@mongodb:27017/agriintel360
+      - REDIS_URL=redis://:secure_password_123@redis:6379
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+      - JWT_SECRET_KEY=super_secure_jwt_secret_key_change_in_production
+      - ENVIRONMENT=development
+    volumes:
+      - ./backend:/app
+      - ./ml-models:/app/ml-models
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+      - mongodb
+      - redis
+      - elasticsearch
+    networks:
+      - agriintel_network
+    restart: unless-stopped
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  # Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: agriintel_frontend
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+      - NEXT_PUBLIC_MAPBOX_TOKEN=your_mapbox_token_here
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - agriintel_network
+    restart: unless-stopped
+
+  # Data Pipeline Services
+  airflow-webserver:
+    image: apache/airflow:2.7.2-python3.11
+    container_name: agriintel_airflow
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://admin:secure_password_123@postgres:5432/airflow
+      - AIRFLOW__CORE__FERNET_KEY=81HqDtbqAywKSOumSha3BhWNOdQ26slT6K0YaZeZyPs=
+      - AIRFLOW__WEBSERVER__SECRET_KEY=super_secret_key_change_in_production
+      - AIRFLOW__CORE__DAGS_FOLDER=/opt/airflow/dags
+    volumes:
+      - ./data-pipeline/dags:/opt/airflow/dags
+      - ./data-pipeline/logs:/opt/airflow/logs
+      - ./data-pipeline/plugins:/opt/airflow/plugins
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+    networks:
+      - agriintel_network
+    restart: unless-stopped
+    command: >
+      bash -c "
+      airflow db init &&
+      airflow users create --username admin --password admin --firstname Admin --lastname User --role Admin --email admin@agriintel360.com &&
+      airflow webserver
+      "
+
+  # Message Queue for real-time notifications
+  rabbitmq:
+    image: rabbitmq:3.12-management
+    container_name: agriintel_rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: secure_password_123
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - agriintel_network
+    restart: unless-stopped
+
+  # Monitoring
+  prometheus:
+    image: prom/prometheus:v2.47.0
+    container_name: agriintel_prometheus
+    volumes:
+      - ./infrastructure/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - agriintel_network
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:10.1.0
+    container_name: agriintel_grafana
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: secure_password_123
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./infrastructure/monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./infrastructure/monitoring/grafana/datasources:/etc/grafana/provisioning/datasources
+    ports:
+      - "3001:3000"
+    depends_on:
+      - prometheus
+    networks:
+      - agriintel_network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  mongodb_data:
+  redis_data:
+  elasticsearch_data:
+  rabbitmq_data:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  agriintel_network:
+    driver: bridge

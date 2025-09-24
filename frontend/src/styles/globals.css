@@ -1,0 +1,260 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 142 76% 36%;
+    --primary-foreground: 355.7 100% 97.3%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222.2 84% 4.9%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96%;
+    --accent-foreground: 222.2 84% 4.9%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 142 76% 36%;
+    --radius: 0.5rem;
+    
+    /* Custom AgriIntel360 variables */
+    --agri-primary: 142 76% 36%;
+    --agri-secondary: 45 93% 47%;
+    --earth-brown: 30 41% 45%;
+    --sky-blue: 199 89% 48%;
+    
+    /* Fonts */
+    --font-sans: 'Inter', system-ui, sans-serif;
+    --font-heading: 'Poppins', system-ui, sans-serif;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 142 76% 36%;
+    --primary-foreground: 222.2 84% 4.9%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 142 76% 36%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  
+  body {
+    @apply bg-background text-foreground font-sans;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading;
+  }
+  
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    @apply bg-secondary/20;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    @apply bg-muted-foreground/50 rounded-full;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-muted-foreground/80;
+  }
+  
+  /* Focus styles */
+  .focus-visible:focus-visible {
+    @apply ring-2 ring-ring ring-offset-2 ring-offset-background outline-none;
+  }
+  
+  /* Custom loading animation */
+  .loading-spinner {
+    @apply animate-spin rounded-full h-8 w-8 border-b-2 border-primary;
+  }
+  
+  /* Map container */
+  .mapboxgl-popup {
+    @apply font-sans;
+  }
+  
+  .mapboxgl-popup-content {
+    @apply bg-card text-card-foreground border border-border rounded-md shadow-lg;
+  }
+  
+  /* Chart containers */
+  .recharts-cartesian-grid-horizontal line,
+  .recharts-cartesian-grid-vertical line {
+    @apply stroke-border;
+  }
+  
+  .recharts-legend-wrapper {
+    @apply text-muted-foreground;
+  }
+}
+
+@layer components {
+  /* Button variants */
+  .btn-primary {
+    @apply bg-primary text-primary-foreground hover:bg-primary/90 active:bg-primary/95 focus-visible:ring-ring;
+  }
+  
+  .btn-secondary {
+    @apply bg-secondary text-secondary-foreground hover:bg-secondary/80 active:bg-secondary/90;
+  }
+  
+  .btn-ghost {
+    @apply hover:bg-accent hover:text-accent-foreground;
+  }
+  
+  /* Card styles */
+  .card-hover {
+    @apply transition-all duration-200 hover:shadow-lg hover:-translate-y-1;
+  }
+  
+  /* Glass morphism effect */
+  .glass {
+    @apply bg-white/80 dark:bg-black/80 backdrop-blur-sm border border-white/20 dark:border-white/10;
+  }
+  
+  /* Gradient texts */
+  .gradient-text {
+    @apply bg-gradient-to-r from-agri-600 to-agri-400 bg-clip-text text-transparent;
+  }
+  
+  .gradient-text-earth {
+    @apply bg-gradient-to-r from-earth-600 to-earth-400 bg-clip-text text-transparent;
+  }
+  
+  /* Data visualization containers */
+  .chart-container {
+    @apply bg-card border border-border rounded-lg p-6 shadow-sm;
+  }
+  
+  /* Form styles */
+  .form-field {
+    @apply bg-background border border-input rounded-md px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent;
+  }
+  
+  /* Navigation */
+  .nav-item {
+    @apply flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors;
+  }
+  
+  .nav-item-active {
+    @apply bg-primary text-primary-foreground;
+  }
+  
+  .nav-item-inactive {
+    @apply text-muted-foreground hover:text-foreground hover:bg-accent;
+  }
+  
+  /* Sidebar */
+  .sidebar {
+    @apply fixed inset-y-0 left-0 z-50 w-64 bg-card border-r border-border;
+  }
+  
+  /* Mobile responsive utilities */
+  .mobile-menu {
+    @apply fixed inset-0 z-50 bg-background/80 backdrop-blur-sm lg:hidden;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  
+  /* Animation utilities */
+  .animate-fade-in-up {
+    @apply animate-[fade-in-up_0.5s_ease-out];
+  }
+  
+  @keyframes fade-in-up {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  /* Grid utilities for dashboard */
+  .dashboard-grid {
+    @apply grid gap-6 lg:grid-cols-3 xl:grid-cols-4;
+  }
+  
+  .dashboard-main {
+    @apply lg:col-span-2 xl:col-span-3;
+  }
+  
+  .dashboard-sidebar {
+    @apply lg:col-span-1 xl:col-span-1;
+  }
+  
+  /* Chart responsive utilities */
+  .chart-responsive {
+    @apply w-full h-64 md:h-80 lg:h-96;
+  }
+}
+
+/* Print styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  
+  .print-break-inside {
+    break-inside: avoid;
+  }
+  
+  .print-break-before {
+    break-before: page;
+  }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  :root {
+    --border: 0 0% 0%;
+    --foreground: 0 0% 0%;
+  }
+  
+  .dark {
+    --border: 0 0% 100%;
+    --foreground: 0 0% 100%;
+  }
+}
